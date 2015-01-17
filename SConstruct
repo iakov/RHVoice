@@ -142,6 +142,7 @@ def create_base_env(vars):
     env_args["LIBS"]=[]
     env_args["package_name"]="RHVoice"
     env_args["CPPDEFINES"]=[("RHVOICE","1")]
+    env_args["ENV"] = os.environ
     env=Environment(**env_args)
     env["package_version"]=get_version(env["release"])
     env.Append(CPPDEFINES=("PACKAGE",env.subst(r'\"$package_name\"')))
@@ -188,12 +189,16 @@ def configure(env):
     conf=env.Configure(conf_dir=os.path.join(env["BUILDDIR"],"configure_tests"),
                        log_file=os.path.join(env["BUILDDIR"],"configure.log"),
                        custom_tests={"CheckPKGConfig":CheckPKGConfig,"CheckPKG":CheckPKG})
-    if not conf.CheckCC():
-        print "The C compiler is not working"
-        exit(1)
-    if not conf.CheckCXX():
-        print "The C++ compiler is not working"
-        exit(1)
+    env.Replace(CXX = os.getenv("CXX", "g++"))
+    env.Replace(CC = os.getenv("CC", "gcc"))
+    env.Replace(LD = os.getenv("LD", "ld"))
+    
+#    if not conf.CheckCC():
+#        print "The C compiler is not working"
+#        exit(1)
+#    if not conf.CheckCXX():
+#        print "The C++ compiler is not working"
+#        exit(1)
 # has_sox=conf.CheckLibWithHeader("sox","sox.h","C",call='sox_init();',autoadd=0)
 # if not has_sox:
 #     print "Error: cannot link with libsox"
