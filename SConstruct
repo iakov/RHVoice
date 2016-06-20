@@ -43,13 +43,17 @@ def CheckPKG(context,name):
     return result
 
 def CheckVS(context):
-    context.Message("Checking for Visual Studio 2013... ")
-    result=1
-    try:
-        with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,r"SOFTWARE\Microsoft\VisualStudio\12.0\Setup\VC",_winreg.KEY_READ|_winreg.KEY_WOW64_32KEY) as key:
-            context.env["VCDir"]=_winreg.QueryValueEx(key,"ProductDir")[0]
-    except WindowsError:
-        result=0
+    context.Message("Checking for Visual Studio ... ")
+    result=0
+    for version in ("14.0","12.0"):
+        try:
+            with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,r"SOFTWARE\Microsoft\VisualStudio\{}\Setup\VC".format(version),_winreg.KEY_READ|_winreg.KEY_WOW64_32KEY) as key:
+                context.env["VCDir"]=_winreg.QueryValueEx(key,"ProductDir")[0]
+            result=1
+        except WindowsError:
+            pass
+        if result!=0:
+            break
     context.Result(result)
     return result
 
@@ -209,7 +213,7 @@ def configure(env):
             env["audio_libs"].add("libao")
         if conf.CheckPKG("portaudio-2.0"):
             env["audio_libs"].add("portaudio")
-        has_giomm=conf.CheckPKG("giomm-2.4")
+#        has_giomm=conf.CheckPKG("giomm-2.4")
     if env["PLATFORM"]=="win32":
         env.AppendUnique(LIBS="kernel32")
     conf.Finish()
@@ -251,7 +255,7 @@ def preconfigure_for_windows(env):
                        log_file=os.path.join(BUILDDIR,"configure.log"),
                        custom_tests={"CheckVS":CheckVS,"CheckNSIS":CheckNSIS})
     if not conf.CheckVS():
-        print("Error: Visual Studio 2013 is not installed")
+        print("Error: Visual Studio is not installed")
         exit(1)
     if not conf.CheckNSIS(True):
         conf.CheckNSIS()
